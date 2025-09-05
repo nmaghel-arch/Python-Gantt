@@ -42,6 +42,7 @@ import logging
 import sys
 import types
 import re
+from IPython.display import SVG
 
 # https://bitbucket.org/mozman/svgwrite
 # http://svgwrite.readthedocs.org/en/latest/
