@@ -8,6 +8,12 @@ This is a python class to create gantt chart using SVG
 
 
 Author : Alexandre Norman - norman at xael.org
+
+Contributors:
+
+* Sébastien NOBILI - pipoprods at free.fr
+
+
 Licence : GPL v3 or any later version
 
 
@@ -27,14 +33,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __author__ = 'Alexandre Norman (norman at xael.org)'
-__version__ = '0.5.0'
-__last_modification__ = '2016.02.01'
+__version__ = '0.6.0'
+__last_modification__ = '2016.03.20'
 
 import codecs
 import datetime
 import logging
 import sys
 import types
+import re
 
 # https://bitbucket.org/mozman/svgwrite
 # http://svgwrite.readthedocs.org/en/latest/
@@ -50,6 +57,14 @@ cm = 35.43307
 # https://labix.org/python-dateutil
 import dateutil.relativedelta
 
+class x_scale:
+    custom_x_scale = 1
+    #Variable shared by inheritance with all other classes to define a custom x scaling
+    def __init__(self):
+        x_scale = ''
+        while not (x_scale.isnumeric()):
+            x_scale = input("Input x scale (1 is 100% x scaling)")
+            custom_x_scale = float(x_scale)
 
 class _my_svgwrite_drawing_wrapper(svgwrite.Drawing):
     """
@@ -598,7 +613,7 @@ class Resource(object):
 ############################################################################
 
 
-class Task(object):
+class Task(x_scale):
     """
     Class for manipulating Tasks
     """
@@ -622,6 +637,8 @@ class Task(object):
         display -- boolean, display this task, default True
         state -- string, state of the task
         """
+
+        
         __LOG__.debug('** Task::__init__ {0}'.format({'name':name, 'start':start, 'stop':stop, 'duration':duration, 'depends_of':depends_of, 'resources':resources, 'percent_done':percent_done}))
         self.name = name
         if fullname is not None:
@@ -660,8 +677,8 @@ class Task(object):
         self.drawn_x_begin_coord = None
         self.drawn_x_end_coord = None
         self.drawn_y_coord = None
-        self.cache_start_date = None
-        self.cache_end_date = None
+        self._cache_start_date = None
+        self._cache_end_date = None
 
         # tell each resource we have
         # assigned a new task
@@ -699,8 +716,8 @@ class Task(object):
         Returns the first day of the task, either the one which was given at
         task creation or the one calculated after checking dependencies
         """
-        if self.cache_start_date is not None:
-            return self.cache_start_date
+        if self._cache_start_date is not None:
+            return self._cache_start_date
 
         __LOG__.debug('** Task::start_date ({0})'.format(self.name))
         if self.start is not None:
@@ -715,8 +732,8 @@ class Task(object):
                 if start > self.start:
                     __LOG__.warning('** Due to vacations, Task "{0}", will not start on date {1} but {2}'.format(self.fullname, self.start, start))
 
-                self.cache_start_date = start
-                return self.cache_start_date
+                self._cache_start_date = start
+                return self._cache_start_date
             else:
                 # depends of other task, start date could vary
                 #__LOG__.debug('*** Do depend of other tasks')
@@ -739,8 +756,8 @@ class Task(object):
                 if prev_task_end > self.start:
                     __LOG__.warning('** Due to dependencies, Task "{0}", will not start on date {1} but {2}'.format(self.fullname, self.start, prev_task_end))
 
-                self.cache_start_date = prev_task_end
-                return self.cache_start_date
+                self._cache_start_date = prev_task_end
+                return self._cache_start_date
 
         elif self.duration is None: # start and stop fixed
             current_day = self.start
@@ -767,12 +784,12 @@ class Task(object):
 
                     if depend_start_date > current_day:
                         __LOG__.error('** Due to dependencies, Task "{0}", could not be finished on time (should start as last on {1} but will start on {2})'.format(self.fullname, current_day, depend_start_date))
-                    self.cache_start_date = depend_start_date           
+                    self._cache_start_date = depend_start_date           
             else:
                 # should be first day of start...
-                self.cache_start_date = current_day            
+                self._cache_start_date = current_day            
 
-            return self.cache_start_date
+            return self._cache_start_date
 
         elif self.duration is not None and self.depends_of is not None and self.stop is None :  # duration and dependencies fixed
             prev_task_end = self.depends_of[0].end_date()
@@ -793,7 +810,7 @@ class Task(object):
                 start = start + datetime.timedelta(days=1)
 
             # should be first day of start...
-            self.cache_start_date = start
+            self._cache_start_date = start
 
         elif self.start is None and self.stop is not None: # stop and duration fixed
             # start date not setted, calculate from end_date + depends
@@ -838,18 +855,18 @@ class Task(object):
 
                 if depend_start_date > current_day:
                     __LOG__.error('** Due to dependencies, Task "{0}", could not be finished on time (should start as last on {1} but will start on {2})'.format(self.fullname, current_day, depend_start_date))
-                    self.cache_start_date = depend_start_date           
+                    self._cache_start_date = depend_start_date           
                 else:
                     # should be first day of start...
-                    self.cache_start_date = depend_start_date
+                    self._cache_start_date = depend_start_date
             else:
                 # should be first day of start...
-                self.cache_start_date = current_day            
+                self._cache_start_date = current_day            
 
 
-        if self.cache_start_date != self.start:
-            __LOG__.warning('** starting date for task "{0}" is changed from {1} to {2}'.format(self.fullname, self.start, self.cache_start_date))
-        return self.cache_start_date
+        if self._cache_start_date != self.start:
+            __LOG__.warning('** starting date for task "{0}" is changed from {1} to {2}'.format(self.fullname, self.start, self._cache_start_date))
+        return self._cache_start_date
 
 
     def end_date(self):
@@ -858,8 +875,8 @@ class Task(object):
         creation or the one calculated after checking dependencies
         """
         # Should take care of resources vacations ?
-        if self.cache_end_date is not None:
-            return self.cache_end_date
+        if self._cache_end_date is not None:
+            return self._cache_end_date
 
         __LOG__.debug('** Task::end_date ({0})'.format(self.name))
 
@@ -882,18 +899,18 @@ class Task(object):
         
                     current_day = self.start_date() + datetime.timedelta(days=real_duration)
         
-                self.cache_end_date = self.start_date() + datetime.timedelta(days=real_duration)
-                __LOG__.warning('** task "{0}" will not be finished on time : end_date is changed from {1} to {2}'.format(self.fullname, self.stop, self.cache_end_date))
-                return self.cache_end_date
+                self._cache_end_date = self.start_date() + datetime.timedelta(days=real_duration)
+                __LOG__.warning('** task "{0}" will not be finished on time : end_date is changed from {1} to {2}'.format(self.fullname, self.stop, self._cache_end_date))
+                return self._cache_end_date
                     
 
-            self.cache_end_date = real_end
+            self._cache_end_date = real_end
             if real_end != self.stop:
-                __LOG__.warning('** task "{0}" will not be finished on time : end_date is changed from {1} to {2}'.format(self.fullname, self.stop, self.cache_end_date))
+                __LOG__.warning('** task "{0}" will not be finished on time : end_date is changed from {1} to {2}'.format(self.fullname, self.stop, self._cache_end_date))
 
 
                 
-            return self.cache_end_date
+            return self._cache_end_date
 
         if self.stop is None:
             current_day = self.start_date()
@@ -908,13 +925,13 @@ class Task(object):
     
                 current_day = self.start_date() + datetime.timedelta(days=real_duration)
     
-            self.cache_end_date = self.start_date() + datetime.timedelta(days=real_duration)
-            return self.cache_end_date
+            self._cache_end_date = self.start_date() + datetime.timedelta(days=real_duration)
+            return self._cache_end_date
 
         raise(ValueError)
         return None
 
-    def svg(self, prev_y=0, start=None, end=None, color=None, level=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False):
+    def svg(self, prev_y=0, start=None, end=None, color=None, level=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False, offset=0):
         """
         Return SVG for drawing this task.
 
@@ -926,6 +943,7 @@ class Task(object):
         level -- int, indentation level of the project, not used here
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
+        offset -- X offset from image border to start of drawing zone
         """
         __LOG__.debug('** Task::svg ({0})'.format({'name':self.name, 'prev_y':prev_y, 'start':start, 'end':end, 'color':color, 'level':level}))
 
@@ -994,11 +1012,10 @@ class Task(object):
             sys.exit(1)
 
 
-
         # cas 1 -s--S==E--e-
         if self.start_date() >= start and self.end_date() <= end:
-            x = _time_diff(self.start_date(), start) * 10
-            d = _time_diff_d(self.end_date(), self.start_date()) * 10
+            x = _time_diff(self.start_date(), start) * 10 
+            d = _time_diff_d(self.end_date(), self.start_date()) * 10 
             self.drawn_x_begin_coord = x
             self.drawn_x_end_coord = x+d
         # cas 5 -s--e--S==E-
@@ -1010,14 +1027,14 @@ class Task(object):
         # cas 2 -S==s==E--e-
         elif self.start_date() < start and self.end_date() <= end:
             x = 0
-            d = _time_diff_d(self.end_date(), start) * 10
+            d = _time_diff_d(self.end_date(), start) * 10 
             self.drawn_x_begin_coord = x
             self.drawn_x_end_coord = x+d
             add_begin_mark = True
         # cas 3 -s--S==e==E-
         elif self.start_date() >= start and  self.end_date() > end:
             x = _time_diff(self.start_date(), start) * 10 
-            d = _time_diff_d(end, self.start_date()) * 10
+            d = _time_diff_d(end, self.start_date()) * 10 
             self.drawn_x_begin_coord = x
             self.drawn_x_end_coord = x+d
             add_end_mark = True
@@ -1036,18 +1053,18 @@ class Task(object):
         self.drawn_y_coord = y
         
 
-        svg = svgwrite.container.Group(id=self.name.replace(' ', '_'))
+        svg = svgwrite.container.Group(id=re.sub(r"[ ,'\/()]", '_', self.name))
         svg.add(svgwrite.shapes.Rect(
-                insert=((x+1)*mm, (y+1)*mm),
-                size=((d-2)*mm, 8*mm),
+                insert=((x+1+offset)*mm * x_scale.custom_x_scale, (y+1)*mm),
+                size=((d-2)*mm * x_scale.custom_x_scale, 8*mm),
                 fill=color,
                 stroke=color,
                 stroke_width=2,
                 opacity=0.85,
                 ))
         svg.add(svgwrite.shapes.Rect(
-                insert=((x+1)*mm, (y+6)*mm),
-                size=(((d-2))*mm, 3*mm),
+                insert=((x+1+offset)*mm * x_scale.custom_x_scale, (y+6)*mm),
+                size=(((d-2))*mm * x_scale.custom_x_scale, 3*mm),
                 fill="#909090",
                 stroke=color,
                 stroke_width=1,
@@ -1056,8 +1073,8 @@ class Task(object):
 
         if add_modified_begin_mark:
             svg.add(svgwrite.shapes.Rect(
-                    insert=((x+1)*mm, (y+1)*mm),
-                    size=(5*mm, 4*mm),
+                    insert=((x+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
+                    size=(5*mm * x_scale.custom_x_scale, 4*mm),
                     fill="#0000FF",
                     stroke=color,
                     stroke_width=1,
@@ -1066,8 +1083,8 @@ class Task(object):
 
         if add_modified_end_mark:
             svg.add(svgwrite.shapes.Rect(
-                    insert=((x+d-7+1)*mm, (y+1)*mm),
-                    size=(5*mm, 4*mm),
+                    insert=((x+d-7+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
+                    size=(5*mm * x_scale.custom_x_scale, 4*mm),
                     fill="#0000FF",
                     stroke=color,
                     stroke_width=1,
@@ -1077,8 +1094,8 @@ class Task(object):
 
         if add_begin_mark:
             svg.add(svgwrite.shapes.Rect(
-                    insert=((x+1)*mm, (y+1)*mm),
-                    size=(5*mm, 8*mm),
+                    insert=((x+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
+                    size=(5*mm * x_scale.custom_x_scale, 8*mm),
                     fill="#000000",
                     stroke=color,
                     stroke_width=1,
@@ -1086,8 +1103,8 @@ class Task(object):
                     ))
         if add_end_mark:
             svg.add(svgwrite.shapes.Rect(
-                    insert=((x+d-7+1)*mm, (y+1)*mm),
-                    size=(5*mm, 8*mm),
+                    insert=((x+d-7+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
+                    size=(5*mm * x_scale.custom_x_scale, 8*mm),
                     fill="#000000",
                     stroke=color,
                     stroke_width=1,
@@ -1097,8 +1114,8 @@ class Task(object):
         if self.percent_done is not None and self.percent_done > 0:
             # Bar shade
             svg.add(svgwrite.shapes.Rect(
-                    insert=((x+1)*mm, (y+6)*mm),
-                    size=(((d-2)*self.percent_done/100)*mm, 3*mm),
+                    insert=((x+1+offset)*mm * x_scale.custom_x_scale, (y+6)*mm),
+                    size=(((d-2)*self.percent_done/100)*mm * x_scale.custom_x_scale, 3*mm),
                     fill="#F08000",
                     stroke=color,
                     stroke_width=1,
@@ -1106,15 +1123,15 @@ class Task(object):
                 ))
 
         if not title_align_on_left:
-            tx = x+2
+            tx = (x+2) * x_scale.custom_x_scale
         else:
-            tx = 5
+            tx = 5 * x_scale.custom_x_scale
             
         svg.add(svgwrite.text.Text(self.fullname, insert=((tx)*mm, (y + 5)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15))
 
         if self.resources is not None:
             t = " / ".join(["{0}".format(r.name) for r in self.resources])
-            svg.add(svgwrite.text.Text("{0}".format(t), insert=((x+2)*mm, (y + 8.5)*mm), fill='purple', stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15-5))
+            svg.add(svgwrite.text.Text("{0}".format(t), insert=(tx*mm, (y + 8.5)*mm), fill='purple', stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15-5))
 
 
         return (svg, 1)
@@ -1139,8 +1156,8 @@ class Task(object):
                         if t.drawn_x_end_coord < self.drawn_x_begin_coord:
                             # horizontal line
                             svg.add(svgwrite.shapes.Line(
-                                    start=((t.drawn_x_end_coord + 9)*mm, (t.drawn_y_coord + 5)*mm), 
-                                    end=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 5)*mm), 
+                                    start=((t.drawn_x_end_coord + 9)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                    end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
                                     stroke='black',
                                     stroke_dasharray='5,3',
                                     ))
@@ -1150,8 +1167,8 @@ class Task(object):
                             svg.add(marker)
                             # vertical line
                             eline = svgwrite.shapes.Line(
-                                start=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 5)*mm), 
-                                end=((self.drawn_x_begin_coord)*mm, (self.drawn_y_coord + 5)*mm), 
+                                start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 )
@@ -1161,22 +1178,22 @@ class Task(object):
                         else:
                             # horizontal line
                             svg.add(svgwrite.shapes.Line(
-                                    start=((t.drawn_x_end_coord + 9)*mm, (t.drawn_y_coord + 5)*mm), 
-                                    end=((self.drawn_x_begin_coord + 10)*mm, (t.drawn_y_coord + 5)*mm), 
+                                    start=((t.drawn_x_end_coord + 9)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                    end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
                                     stroke='black',
                                     stroke_dasharray='5,3',
                                     ))
                             # vertical
                             svg.add(svgwrite.shapes.Line(
-                                start=((self.drawn_x_begin_coord + 10)*mm, (t.drawn_y_coord + 5)*mm), 
-                                end=((self.drawn_x_begin_coord + 10)*mm, (t.drawn_y_coord + 15)*mm), 
+                                start=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 ))
                             # horizontal line
                             svg.add(svgwrite.shapes.Line(
-                                    start=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 15)*mm), 
-                                    end=((self.drawn_x_begin_coord + 10)*mm, (t.drawn_y_coord + 15)*mm), 
+                                    start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm), 
+                                    end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm), 
                                     stroke='black',
                                     stroke_dasharray='5,3',
                                     ))
@@ -1186,8 +1203,8 @@ class Task(object):
                             svg.add(marker)
                             # vertical line
                             eline = svgwrite.shapes.Line(
-                                start=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 15)*mm), 
-                                end=((self.drawn_x_begin_coord)*mm, (self.drawn_y_coord + 5)*mm), 
+                                start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm), 
+                                end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 )
@@ -1198,8 +1215,8 @@ class Task(object):
                     if not (t.drawn_x_end_coord is None or t.drawn_y_coord is None or self.drawn_x_begin_coord is None) and prj.is_in_project(t):
                         # horizontal line
                         svg.add(svgwrite.shapes.Line(
-                                start=((t.drawn_x_end_coord - 2)*mm, (t.drawn_y_coord + 5)*mm), 
-                                end=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 5)*mm), 
+                                start=((t.drawn_x_end_coord - 2)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 ))
@@ -1209,8 +1226,8 @@ class Task(object):
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
-                            start=((self.drawn_x_begin_coord)*mm, (t.drawn_y_coord + 5)*mm), 
-                            end=((self.drawn_x_begin_coord)*mm, (self.drawn_y_coord + 5)*mm), 
+                            start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                            end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm), 
                             stroke='black',
                             stroke_dasharray='5,3',
                             )
@@ -1236,8 +1253,8 @@ class Task(object):
         self.drawn_x_begin_coord = None
         self.drawn_x_end_coord = None
         self.drawn_y_coord = None
-        self.cache_start_date = None
-        self.cache_end_date = None
+        self._cache_start_date = None
+        self._cache_end_date = None
         return
 
 
@@ -1356,8 +1373,8 @@ class Milestone(Task):
         self.drawn_x_begin_coord = None
         self.drawn_x_end_coord = None
         self.drawn_y_coord = None
-        self.cache_start_date = None
-        self.cache_end_date = None
+        self._cache_start_date = None
+        self._cache_end_date = None
 
         return
 
@@ -1372,7 +1389,7 @@ class Milestone(Task):
         return self.start_date()
 
 
-    def svg(self, prev_y=0, start=None, end=None, color=None, level=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False):
+    def svg(self, prev_y=0, start=None, end=None, color=None, level=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False, offset=0):
         """
         Return SVG for drawing this milestone.
 
@@ -1384,6 +1401,7 @@ class Milestone(Task):
         level -- int, indentation level of the project, not used here
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
         title_align_on_left -- boolean, align milestone title on left
+        offset -- X offset from image border to start of drawing zone
         """
         __LOG__.debug('** Milestone::svg ({0})'.format({'name':self.name, 'prev_y':prev_y, 'start':start, 'end':end, 'color':color, 'level':level}))
 
@@ -1456,7 +1474,7 @@ class Milestone(Task):
 
         # cas 1 -s--X--e-
         if self.start_date() >= start and self.end_date() <= end:
-            x = _time_diff(self.start_date(), start) * 10
+            x = _time_diff(self.start_date(), start) * 10 
             self.drawn_x_begin_coord = x
             self.drawn_x_end_coord = x
         else:
@@ -1469,14 +1487,14 @@ class Milestone(Task):
         #insert=((x+1)*mm, (y+1)*mm),
         #size=((d-2)*mm, 8*mm),
 
-        svg = svgwrite.container.Group(id=self.name.replace(' ', '_'))
+        svg = svgwrite.container.Group(id=re.sub(r"[ ,'\/()]", '_', self.name))
         # 3.543307 is for conversion from mm to pt units !
         svg.add(svgwrite.shapes.Polygon(
-                points=[
-                    ((x+5)*mm, (y+2)*mm),
-                    ((x+8)*mm, (y+5)*mm),
-                    ((x+5)*mm, (y+8)*mm),
-                    ((x+2)*mm, (y+5)*mm)
+                points=[### TO DO: CHECK MARKER SIZE WITH OFFSET ###
+                    ((x+5+offset)*mm* x_scale.custom_x_scale, (y+2)*mm),#upper center point
+                    ((x+8+offset/x_scale.custom_x_scale)*mm* x_scale.custom_x_scale, (y+5)*mm),#right center
+                    ((x+5+offset)*mm* x_scale.custom_x_scale, (y+8)*mm),#lower center
+                    ((x+2+offset/x_scale.custom_x_scale)*mm* x_scale.custom_x_scale, (y+5)*mm)#left center
                 ],
                 fill=color,
                 stroke=color,
@@ -1487,9 +1505,9 @@ class Milestone(Task):
 
 
         if not title_align_on_left:
-            tx = x+2
+            tx = (x+2)*x_scale.custom_x_scale
         else:
-            tx = 5
+            tx = 5*x_scale.custom_x_scale
             
         svg.add(svgwrite.text.Text(self.fullname, insert=((tx)*mm, (y + 5)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15))
 
@@ -1515,8 +1533,8 @@ class Milestone(Task):
                     if not (t.drawn_x_end_coord is None or t.drawn_y_coord is None or self.drawn_x_begin_coord is None) and prj.is_in_project(t):
                         # horizontal line
                         svg.add(svgwrite.shapes.Line(
-                                start=((t.drawn_x_end_coord + 9)*mm, (t.drawn_y_coord + 5)*mm), 
-                                end=((self.drawn_x_begin_coord + 5)*mm, (t.drawn_y_coord + 5)*mm), 
+                                start=((t.drawn_x_end_coord + 9)*mm*self._x_scale, (t.drawn_y_coord + 5)*mm), 
+                                end=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 ))
@@ -1526,8 +1544,8 @@ class Milestone(Task):
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
-                            start=((self.drawn_x_begin_coord + 5)*mm, (t.drawn_y_coord + 5)*mm), 
-                            end=((self.drawn_x_begin_coord+5)*mm, (self.drawn_y_coord)*mm), 
+                            start=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                            end=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (self.drawn_y_coord)*mm), 
                             stroke='black',
                             stroke_dasharray='5,3',
                             )
@@ -1538,8 +1556,8 @@ class Milestone(Task):
                     if not (t.drawn_x_end_coord is None or t.drawn_y_coord is None or self.drawn_x_begin_coord is None) and prj.is_in_project(t):
                         # horizontal line
                         svg.add(svgwrite.shapes.Line(
-                                start=((t.drawn_x_end_coord - 2)*mm, (t.drawn_y_coord + 5)*mm), 
-                                end=((self.drawn_x_begin_coord + 5)*mm, (t.drawn_y_coord + 5)*mm), 
+                                start=((t.drawn_x_end_coord - 2)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
+                                end=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm), 
                                 stroke='black',
                                 stroke_dasharray='5,3',
                                 ))
@@ -1549,8 +1567,8 @@ class Milestone(Task):
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
-                            start=((self.drawn_x_begin_coord+5)*mm, (t.drawn_y_coord+5)*mm), 
-                            end=((self.drawn_x_begin_coord+5)*mm, (self.drawn_y_coord + 0)*mm), 
+                            start=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord+5)*mm), 
+                            end=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 0)*mm), 
                             stroke='black',
                             stroke_dasharray='5,3',
                             )
@@ -1621,6 +1639,7 @@ class Project(object):
         Keyword arguments:
         name -- string, name of the project
         color -- color for all tasks of the project
+        scale -- horizonal scale factor (default 1)
         """
         self.tasks = []
         self.name = name
@@ -1643,7 +1662,7 @@ class Project(object):
         self.cache_nb_elements = None
         return
 
-    def _svg_calendar(self, maxx, maxy, start_date, today=None, scale=DRAW_WITH_DAILY_SCALE):
+    def _svg_calendar(self, maxx, maxy, start_date, today=None, scale=DRAW_WITH_DAILY_SCALE, offset=0):
         """
         Draw calendar in svg, begining at start_date for maxx days, containing
         maxy lines. If today is given, draw a blue line at date
@@ -1654,6 +1673,7 @@ class Project(object):
         start_date -- datetime.date of the first day to draw
         today -- datetime.date of day as today reference
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        offset -- X offset from image border to start of drawing zone
         """
         dwg = svgwrite.container.Group()
 
@@ -1663,7 +1683,7 @@ class Project(object):
 
         vlines = dwg.add(svgwrite.container.Group(id='vlines', stroke='lightgray'))
         for x in range(maxx):
-            vlines.add(svgwrite.shapes.Line(start=(x*cm, 2*cm), end=(x*cm, (maxy+2)*cm)))
+            vlines.add(svgwrite.shapes.Line(start=((x+offset/10)*cm*x_scale.custom_x_scale, 2*cm), end=((x+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm)))
             if scale == DRAW_WITH_DAILY_SCALE:
                 jour = start_date + datetime.timedelta(days=x)
             elif scale == DRAW_WITH_WEEKLY_SCALE:
@@ -1677,8 +1697,8 @@ class Project(object):
                 
             if not today is None and today == jour:
                 vlines.add(svgwrite.shapes.Rect(
-                    insert=((x+0.4)*cm, 2*cm),
-                    size=(0.2*cm, (maxy)*cm),
+                    insert=((x+0.4+offset)*cm*x_scale.custom_x_scale, 2*cm),
+                    size=(0.2*cm*x_scale.custom_x_scale, (maxy)*cm),
                     fill='#76e9ff',
                     stroke='lightgray',
                     stroke_width=0,
@@ -1689,8 +1709,8 @@ class Project(object):
                 # draw vacations
                 if (start_date + datetime.timedelta(days=x)).weekday() in _not_worked_days() or (start_date + datetime.timedelta(days=x)) in VACATIONS:
                     vlines.add(svgwrite.shapes.Rect(
-                        insert=(x*cm, 2*cm),
-                        size=(1*cm, maxy*cm),
+                        insert=((x+offset/10)*cm*x_scale.custom_x_scale, 2*cm),
+                        size=(1*cm*x_scale.custom_x_scale, maxy*cm),
                         fill='gray',
                         stroke='lightgray',
                         stroke_width=1,
@@ -1699,27 +1719,27 @@ class Project(object):
 
                 # Current day
                 vlines.add(svgwrite.text.Text('{1} {0:02}'.format(jour.day, cal[jour.weekday()][0]),
-                                              insert=((x*10+1)*mm, 19*mm),
+                                              insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
                 if jour.day == 1 and jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
-                                                  insert=((x*10+1)*mm, 5*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5,
                                                   font_weight="bold"))
                 # Month name
                 if jour.day == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
-                                                  insert=((x*10+1)*mm, 10*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 10*mm),
                                                   fill='#800000', stroke='#800000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3,
                                                   font_weight="bold"))
                 # Week number
                 if jour.weekday() == 0:
                     vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
-                                                  insert=((x*10+1)*mm, 15*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 15*mm),
                                                   fill='black', stroke='black', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'],
                                                   font_size=15+1,
@@ -1729,30 +1749,30 @@ class Project(object):
                 # Year
                 if jour.isocalendar()[1] == 1 and jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
-                                                  insert=((x*10+1)*mm, 5*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Month name
                 if jour.day <= 7:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
-                                                  insert=((x*10+1)*mm, 10*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 10*mm),
                                                   fill='#800000', stroke='#800000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
                 vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
-                                              insert=((x*10+1)*mm, 15*mm),
+                                              insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 15*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
 
             elif scale == DRAW_WITH_MONTHLY_SCALE:
                 # Month number
                 vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%m")),
-                                              insert=((x*10+1)*mm, 19*mm),
+                                              insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
                                               fill='black', stroke='black', stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
                 if jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
-                                                  insert=((x*10+1)*mm, 5*mm),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
                                                   fill='#400000', stroke='#400000', stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
 
@@ -1765,21 +1785,21 @@ class Project(object):
 
 
 
-        vlines.add(svgwrite.shapes.Line(start=(maxx*cm, 2*cm), end=(maxx*cm, (maxy+2)*cm)))
+        vlines.add(svgwrite.shapes.Line(start=((maxx+offset/10)*cm*x_scale.custom_x_scale, 2*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm)))
 
 
         hlines = dwg.add(svgwrite.container.Group(id='hlines', stroke='lightgray'))
 
-        dwg.add(svgwrite.shapes.Line(start=((0)*cm, (2)*cm), end=((maxx)*cm, (2)*cm), stroke='black'))
-        dwg.add(svgwrite.shapes.Line(start=((0)*cm, (maxy+2)*cm), end=((maxx)*cm, (maxy+2)*cm), stroke='black'))
+        dwg.add(svgwrite.shapes.Line(start=((0+offset/10)*cm*x_scale.custom_x_scale, (2)*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (2)*cm), stroke='black'))
+        dwg.add(svgwrite.shapes.Line(start=((0+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm), stroke='black'))
 
         for y in range(2, maxy+3):
-            hlines.add(svgwrite.shapes.Line(start=(0*cm, y*cm), end=(maxx*cm, y*cm)))
+            hlines.add(svgwrite.shapes.Line(start=((0+offset/10)*cm*x_scale.custom_x_scale, y*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, y*cm)))
 
         return dwg
 
 
-    def make_svg_for_tasks(self, filename, today=None, start=None, end=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False):
+    def make_svg_for_tasks(self, filename, today=None, start=None, end=None, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False, offset=0):
         """
         Draw gantt of tasks and output it to filename. If start or end are
         given, use them as reference, otherwise use project first and last day
@@ -1791,6 +1811,7 @@ class Project(object):
         end -- datetime.date of last day to draw
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
+        offset -- X offset from image border to start of drawing zone
         """
         if len(self.tasks) == 0:
             __LOG__.warning('** Empty project : {0}'.format(self.name))
@@ -1815,7 +1836,7 @@ class Project(object):
             sys.exit(1)
 
         ldwg = svgwrite.container.Group()
-        psvg, pheight = self.svg(prev_y=2, start=start_date, end=end_date, color = self.color, scale=scale, title_align_on_left=title_align_on_left)
+        psvg, pheight = self.svg(prev_y=2, start=start_date, end=end_date, color = self.color, scale=scale, title_align_on_left=title_align_on_left, offset=offset)
         if psvg is not None:
             ldwg.add(psvg)
             
@@ -1851,25 +1872,26 @@ class Project(object):
             # how many quarter do we need to draw ?
             __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
             sys.exit(1)
-            
 
 
 
         dwg = _my_svgwrite_drawing_wrapper(filename, debug=True)
         dwg.add(svgwrite.shapes.Rect(
-                    insert=(0*cm, 0*cm),
-                    size=((maxx+1)*cm, (pheight+3)*cm),
+                    insert=((0)*cm, 0*cm),
+                    size=((maxx+1+offset/10)*cm, (pheight+3)*cm),
                     fill='white',
                     stroke_width=0,
                     opacity=1
                     ))
 
-        dwg.add(self._svg_calendar(maxx, pheight, start_date, today, scale))
+        dwg.add(self._svg_calendar(maxx, pheight, start_date, today, scale, offset=offset))
         dwg.add(ldwg)
-        dwg.save(width=(maxx+1)*cm, height=(pheight+3)*cm)
+        dwg.save(width=(maxx+1+offset/10)*cm*x_scale.custom_x_scale, height=(pheight+3)*cm)
+        display(SVG(dwg.filename))
+        
         return
 
-    def make_svg_for_resources(self, filename, today=None, start=None, end=None, resources=None, one_line_for_tasks=False, filter='', scale=DRAW_WITH_DAILY_SCALE):
+    def make_svg_for_resources(self, filename, today=None, start=None, end=None, resources=None, one_line_for_tasks=False, filter='', scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False, offset=0):
         """
         Draw resources affectation and output it to filename. If start or end are
         given, use them as reference, otherwise use project first and last day
@@ -1886,6 +1908,8 @@ class Project(object):
         one_line_for_tasks -- use only one line to display all tasks ?
         filter -- display only those tags
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        title_align_on_left -- boolean, align task title on left
+        offset -- X offset from image border to start of drawing zone
         """
 
         if scale != DRAW_WITH_DAILY_SCALE:
@@ -1940,7 +1964,7 @@ class Project(object):
             ldwg.add(
                 svgwrite.shapes.Line(
                     start=((0)*cm, (2)*cm), 
-                    end=((maxx+1)*cm, (2)*cm), 
+                    end=((maxx+1+offset/10)*cm, (2)*cm), 
                     stroke='black',
                     ))
 
@@ -1971,7 +1995,7 @@ class Project(object):
                 # Vacations
                 if cday.weekday() not in _not_worked_days() and cday not in VACATIONS and not r.is_available(cday):
                      vac.add(svgwrite.shapes.Rect(
-                            insert=(((cday - start_date).days * 10 + 1)*mm, ((conflict_display_line)*10+1)*mm),
+                            insert=(((cday - start_date).days * 10 + 1+offset)*mm*x_scale.custom_x_scale, ((conflict_display_line)*10+1)*mm),
                             size=(4*mm, 8*mm),
                             fill="#008000",
                             stroke="#008000",
@@ -1982,7 +2006,7 @@ class Project(object):
                 # Overcharge
                 if cday.weekday() not in _not_worked_days() and cday not in VACATIONS and cday in overcharged_days:
                     conflicts.add(svgwrite.shapes.Rect(
-                        insert=(((cday - start_date).days * 10 + 1 + 4)*mm, ((conflict_display_line)*10+1)*mm),
+                        insert=(((cday - start_date).days * 10 + 1 + 4 +offset)*mm*x_scale.custom_x_scale, ((conflict_display_line)*10+1)*mm),
                         size=(4*mm, 8*mm),
                         fill="#AA0000",
                         stroke="#AA0000",
@@ -1996,7 +2020,7 @@ class Project(object):
             nb_tasks = 0
             for t in self.get_tasks():
                 if t.get_resources() is not None and r in t.get_resources():
-                    psvg, void = t.svg(prev_y = nline, start=start_date, end=end_date, color=self.color, scale=scale)
+                    psvg, void = t.svg(prev_y = nline, start=start_date, end=end_date, color=self.color, scale=scale, title_align_on_left=title_align_on_left, offset=offset)
                     if psvg is not None:
                         ldwg.add(psvg)
                         nb_tasks +=1
@@ -2016,7 +2040,7 @@ class Project(object):
                     ldwg.add(
                         svgwrite.shapes.Line(
                             start=((0)*cm, (nline)*cm), 
-                            end=((maxx+1)*cm, (nline)*cm), 
+                            end=((maxx+1+offset/10)*cm*x_scale.custom_x_scale, (nline)*cm), 
                             stroke='black',
                             ))
                 
@@ -2026,7 +2050,7 @@ class Project(object):
                     ldwg.add(
                         svgwrite.shapes.Line(
                         start=((0)*cm, (nline)*cm), 
-                        end=((maxx+1)*cm, (nline)*cm), 
+                        end=((maxx+1)*cm*x_scale.custom_x_scale, (nline)*cm), 
                         stroke='black',
                         ))
 
@@ -2034,18 +2058,20 @@ class Project(object):
         dwg = _my_svgwrite_drawing_wrapper(filename, debug=True)
         dwg.add(svgwrite.shapes.Rect(
                     insert=(0*cm, 0*cm),
-                    size=((maxx+1)*cm, (nline+1)*cm),
+                    size=((maxx+1+offset/10)*cm*x_scale.custom_x_scale, (nline+1)*cm),
                     fill='white',
                     stroke_width=0,
                     opacity=1
                     ))
-        dwg.add(self._svg_calendar(maxx, nline-2, start_date, today, scale))
+        dwg.add(self._svg_calendar(maxx, nline-2, start_date, today, scale, offset=offset))
         dwg.add(ldwg)
-        dwg.save(width=(maxx+1)*cm, height=(nline+1)*cm)
+        dwg.save(width=(maxx+1+offset/10)*cm*x_scale.custom_x_scale, height=(nline+1)*cm)
+        display(SVG(dwg.filename))
         return {
             'conflicts_vacations': conflicts_vacations, 
             'conflicts_tasks':conflicts_tasks
             }
+        
 
 
     def start_date(self):
@@ -2077,7 +2103,7 @@ class Project(object):
                 last = t.end_date()
         return last
 
-    def svg(self, prev_y=0, start=None, end=None, color=None, level=0, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False):
+    def svg(self, prev_y=0, start=None, end=None, color=None, level=0, scale=DRAW_WITH_DAILY_SCALE, title_align_on_left=False, offset=0):
         """
         Return (SVG code, number of lines drawn) for the project. Draws all
         tasks and add project name with a purple bar on the left side.
@@ -2090,6 +2116,7 @@ class Project(object):
         level -- int, indentation level of the project
         scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
+        offset -- X offset from image border to start of drawing zone
         """
         if start is None:
             start = self.start_date()
@@ -2104,7 +2131,7 @@ class Project(object):
         prj = svgwrite.container.Group()
 
         for t in self.tasks:
-            trepr, theight = t.svg(cy, start=start, end=end, color=color, level=level+1, scale=scale, title_align_on_left=title_align_on_left)
+            trepr, theight = t.svg(cy, start=start, end=end, color=color, level=level+1, scale=scale, title_align_on_left=title_align_on_left, offset=offset)
             if trepr is not None:
                 prj.add(trepr)
                 cy += theight
@@ -2116,10 +2143,10 @@ class Project(object):
             #     or (self.start_date() >= start and (self.end_date() <= end or self.start_date() <= end))) or level == 1: 
             if ((self.start_date() >= start and self.end_date() <= end) 
                 or ((self.end_date() >=start and self.start_date() <= end))) or level == 1: 
-                fprj.add(svgwrite.text.Text('{0}'.format(self.name), insert=((6*level+3)*mm, ((prev_y)*10+7)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15+3))
+                fprj.add(svgwrite.text.Text('{0}'.format(self.name), insert=((6*level+3+offset)*mm, ((prev_y)*10+7)*mm), fill=_font_attributes()['fill'], stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15+3))
 
                 fprj.add(svgwrite.shapes.Rect(
-                        insert=((6*level+0.8)*mm, (prev_y+0.5)*cm),
+                        insert=((6*level+0.8+offset)*mm, (prev_y+0.5)*cm),
                         size=(0.2*cm, ((cy-prev_y-1)+0.4)*cm),
                         fill='purple',
                         stroke='lightgray',
@@ -2228,6 +2255,10 @@ class Project(object):
                 flist.append(r)
         return flist
 
+    def change_scaling(self, x_scaling):
+        #for t in self.tasks:
+        #   t.custom_x_scale = x_scaling
+        x_scale.custom_x_scale = x_scaling
 
     def csv(self, csv=None):
         """
