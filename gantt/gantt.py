@@ -107,6 +107,33 @@ DRAW_WITH_WEEKLY_SCALE_SHOWDAY = 'wd'
 DRAW_WITH_MONTHLY_SCALE = 'm'
 DRAW_WITH_QUATERLY_SCALE = 'q'
 
+DEFAULT_BACKGROUND_COLOR = '#FFFFFF'
+DEFAULT_BACKGROUND_OPACITY = 1
+
+DEFAULT_LINE_COLOR = '#D3D3D3'
+DEFAULT_DEP_LINE_COLOR = '#000000'
+
+DEFAULT_TASK_COLOR = '#009DE0'
+DEFAULT_TODAY_COLOR = '#FF0000'
+DEFAULT_MILESTONE_COLOR = '#A2C037'
+DEFAULT_VACATION_COLOR = '#808080'
+DEFAULT_OVERCHARGE_COLOR = '#AA0000'
+DEFAULT_PROJECTBAR_COLOR = '#0085CA'
+DEFAULT_TASK_TEXT_COLOR = '#000000'
+DEFAUL_PROGRESSBAR_BACKGROUND_COLOR = '#000000'
+
+DEFAULT_YEAR_COLOR = '#205DA6'
+DEFAULT_QUATER_COLOR = '#000000'
+DEFAULT_MONTH_COLOR = '#000000'
+DEFAULT_WEEK_COLOR = '#000000'
+DEFAULT_DAY_COLOR = '#000000'
+
+DEFAULT_MOD_MARK_COLOR = '#0000FF'
+DEFAULT_BEG_MARK_COLOR = '#000000'
+DEFAULT_END_MARK_COLOR = '#000000'
+DEFAULT_PERCENT_COLOR = '#205DA6'
+
+
 ############################################################################
 
 # Unworked days (0: Monday ... 6: Sunday)
@@ -1070,7 +1097,7 @@ class Task(x_scale):
         svg.add(svgwrite.shapes.Rect(
                 insert=((x+1+offset)*mm * x_scale.custom_x_scale, (y+6)*mm),
                 size=(((d-2))*mm * x_scale.custom_x_scale, 3*mm),
-                fill="#909090",
+                fill=DEFAUL_PROGRESSBAR_BACKGROUND_COLOR,
                 stroke=color,
                 stroke_width=1,
                 opacity=0.2,
@@ -1080,7 +1107,7 @@ class Task(x_scale):
             svg.add(svgwrite.shapes.Rect(
                     insert=((x+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
                     size=(5*mm * x_scale.custom_x_scale, 4*mm),
-                    fill="#0000FF",
+                    fill=DEFAULT_MOD_MARK_COLOR,
                     stroke=color,
                     stroke_width=1,
                     opacity=0.35,
@@ -1090,7 +1117,7 @@ class Task(x_scale):
             svg.add(svgwrite.shapes.Rect(
                     insert=((x+d-7+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
                     size=(5*mm * x_scale.custom_x_scale, 4*mm),
-                    fill="#0000FF",
+                    fill=DEFAULT_MOD_MARK_COLOR,
                     stroke=color,
                     stroke_width=1,
                     opacity=0.35,
@@ -1101,7 +1128,7 @@ class Task(x_scale):
             svg.add(svgwrite.shapes.Rect(
                     insert=((x+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
                     size=(5*mm * x_scale.custom_x_scale, 8*mm),
-                    fill="#000000",
+                    fill=DEFAULT_BEG_MARK_COLOR,
                     stroke=color,
                     stroke_width=1,
                     opacity=0.2,
@@ -1110,7 +1137,7 @@ class Task(x_scale):
             svg.add(svgwrite.shapes.Rect(
                     insert=((x+d-7+1)*mm * x_scale.custom_x_scale, (y+1)*mm),
                     size=(5*mm * x_scale.custom_x_scale, 8*mm),
-                    fill="#000000",
+                    fill=DEFAULT_END_MARK_COLOR,
                     stroke=color,
                     stroke_width=1,
                     opacity=0.2,
@@ -1121,7 +1148,7 @@ class Task(x_scale):
             svg.add(svgwrite.shapes.Rect(
                     insert=((x+1+offset)*mm * x_scale.custom_x_scale, (y+6)*mm),
                     size=(((d-2)*self.percent_done/100)*mm * x_scale.custom_x_scale, 3*mm),
-                    fill="#F08000",
+                    fill=DEFAULT_PERCENT_COLOR,
                     stroke=color,
                     stroke_width=1,
                     opacity=0.35,
@@ -1136,7 +1163,7 @@ class Task(x_scale):
 
         if self.resources is not None:
             t = " / ".join(["{0}".format(r.name) for r in self.resources])
-            svg.add(svgwrite.text.Text("{0}".format(t), insert=(tx*mm, (y + 8.5)*mm), fill='purple', stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15-5))
+            svg.add(svgwrite.text.Text("{0}".format(t), insert=(tx*mm, (y + 8.5)*mm), fill=DEFAULT_TASK_TEXT_COLOR, stroke=_font_attributes()['stroke'], stroke_width=_font_attributes()['stroke_width'], font_family=_font_attributes()['font_family'], font_size=15-5))
 
 
         return (svg, 1)
@@ -1163,18 +1190,18 @@ class Task(x_scale):
                             svg.add(svgwrite.shapes.Line(
                                     start=((t.drawn_x_end_coord + 9)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                     end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
-                                    stroke='black',
+                                    stroke=DEFAULT_DEP_LINE_COLOR,
                                     stroke_dasharray='5,3',
                                     ))
 
                             marker = svgwrite.container.Marker(insert=(5,5), size=(10,10))
-                            marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill='#000000', opacity=0.5, stroke_width=0))
+                            marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill=DEFAULT_DEP_LINE_COLOR, opacity=0.5, stroke_width=0))
                             svg.add(marker)
                             # vertical line
                             eline = svgwrite.shapes.Line(
                                 start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                 end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 )
                             eline['marker-end'] = marker.get_funciri()
@@ -1185,32 +1212,32 @@ class Task(x_scale):
                             svg.add(svgwrite.shapes.Line(
                                     start=((t.drawn_x_end_coord + 9)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                     end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
-                                    stroke='black',
+                                    stroke=DEFAULT_DEP_LINE_COLOR,
                                     stroke_dasharray='5,3',
                                     ))
                             # vertical
                             svg.add(svgwrite.shapes.Line(
                                 start=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                 end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 ))
                             # horizontal line
                             svg.add(svgwrite.shapes.Line(
                                     start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm),
                                     end=((self.drawn_x_begin_coord + 10)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm),
-                                    stroke='black',
+                                    stroke=DEFAULT_DEP_LINE_COLOR,
                                     stroke_dasharray='5,3',
                                     ))
     
                             marker = svgwrite.container.Marker(insert=(5,5), size=(10,10))
-                            marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill='#000000', opacity=0.5, stroke_width=0))
+                            marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill=DEFAULT_DEP_LINE_COLOR, opacity=0.5, stroke_width=0))
                             svg.add(marker)
                             # vertical line
                             eline = svgwrite.shapes.Line(
                                 start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 15)*mm),
                                 end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 )
                             eline['marker-end'] = marker.get_funciri()
@@ -1222,18 +1249,18 @@ class Task(x_scale):
                         svg.add(svgwrite.shapes.Line(
                                 start=((t.drawn_x_end_coord - 2)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                 end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 ))
     
                         marker = svgwrite.container.Marker(insert=(5,5), size=(10,10))
-                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill='#000000', opacity=0.5, stroke_width=0))
+                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill=DEFAULT_DEP_LINE_COLOR, opacity=0.5, stroke_width=0))
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
                             start=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                             end=((self.drawn_x_begin_coord)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 5)*mm),
-                            stroke='black',
+                            stroke=DEFAULT_DEP_LINE_COLOR,
                             stroke_dasharray='5,3',
                             )
                         eline['marker-end'] = marker.get_funciri()
@@ -1363,7 +1390,7 @@ class Milestone(Task):
         if color is not None:
             self.color = color
         else:
-            self.color = '#FF3030'
+            self.color = DEFAULT_MILESTONE_COLOR
             
         self.display = display
         self.state = 'Milestone'
@@ -1553,18 +1580,18 @@ class Milestone(Task):
                         svg.add(svgwrite.shapes.Line(
                                 start=((t.drawn_x_end_coord + 9)*mm*self._x_scale, (t.drawn_y_coord + 5)*mm),
                                 end=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 ))
                         
                         marker = svgwrite.container.Marker(insert=(5,5), size=(10,10))
-                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill='#000000', opacity=0.5, stroke_width=0))
+                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill=DEFAULT_DEP_LINE_COLOR, opacity=0.5, stroke_width=0))
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
                             start=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                             end=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (self.drawn_y_coord)*mm),
-                            stroke='black',
+                            stroke=DEFAULT_DEP_LINE_COLOR,
                             stroke_dasharray='5,3',
                             )
                         eline['marker-end'] = marker.get_funciri()
@@ -1576,18 +1603,18 @@ class Milestone(Task):
                         svg.add(svgwrite.shapes.Line(
                                 start=((t.drawn_x_end_coord - 2)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
                                 end=((self.drawn_x_begin_coord + 5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord + 5)*mm),
-                                stroke='black',
+                                stroke=DEFAULT_DEP_LINE_COLOR,
                                 stroke_dasharray='5,3',
                                 ))
     
                         marker = svgwrite.container.Marker(insert=(5,5), size=(10,10))
-                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill='#000000', opacity=0.5, stroke_width=0))
+                        marker.add(svgwrite.shapes.Circle((5, 5), r=5, fill=DEFAULT_DEP_LINE_COLOR, opacity=0.5, stroke_width=0))
                         svg.add(marker)
                         # vertical line
                         eline = svgwrite.shapes.Line(
                             start=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (t.drawn_y_coord+5)*mm),
                             end=((self.drawn_x_begin_coord+5)*mm*x_scale.custom_x_scale, (self.drawn_y_coord + 0)*mm),
-                            stroke='black',
+                            stroke=DEFAULT_DEP_LINE_COLOR,
                             stroke_dasharray='5,3',
                             )
                         eline['marker-end'] = marker.get_funciri()
@@ -1662,7 +1689,7 @@ class Project(object):
         self.tasks = []
         self.name = name
         if color is None:
-            self.color = '#FFFF90'
+            self.color = DEFAULT_TASK_COLOR
         else:
             self.color = color
 
@@ -1699,7 +1726,16 @@ class Project(object):
     
         maxx += 1
 
-        vlines = dwg.add(svgwrite.container.Group(id='vlines', stroke='lightgray'))
+        vlines = dwg.add(svgwrite.container.Group(id='vlines', stroke=DEFAULT_LINE_COLOR))
+
+        # Year (beginning)
+        vlines.add(svgwrite.text.Text('{0}'.format(start_date.year),
+                                      insert=((0*10+0+offset)*mm*x_scale.custom_x_scale, 5*mm),
+                                      fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                      font_family=_font_attributes()['font_family'], font_size=15+5,
+                                      font_weight="bold"))
+
+        
         for x in range(maxx):
             vlines.add(svgwrite.shapes.Line(start=((x+offset/10)*cm*x_scale.custom_x_scale, 2*cm), end=((x+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm)))
             if scale == DRAW_WITH_DAILY_SCALE:
@@ -1715,8 +1751,8 @@ class Project(object):
                 vlines.add(svgwrite.shapes.Rect(
                     insert=((x+0.4+offset)*cm*x_scale.custom_x_scale, 2*cm),
                     size=(0.2*cm*x_scale.custom_x_scale, (maxy)*cm),
-                    fill='#76e9ff',
-                    stroke='lightgray',
+                    fill=DEFAULT_TODAY_COLOR,
+                    stroke=DEFAULT_LINE_COLOR,
                     stroke_width=0,
                     opacity=0.8
                     ))
@@ -1727,8 +1763,8 @@ class Project(object):
                     vlines.add(svgwrite.shapes.Rect(
                         insert=((x+offset/10)*cm*x_scale.custom_x_scale, 2*cm),
                         size=(1*cm*x_scale.custom_x_scale, maxy*cm),
-                        fill='gray',
-                        stroke='lightgray',
+                        fill=DEFAULT_VACATION_COLOR,
+                        stroke=DEFAULT_LINE_COLOR,
                         stroke_width=1,
                         opacity=0.7,
                         ))
@@ -1736,66 +1772,69 @@ class Project(object):
                 # Current day
                 vlines.add(svgwrite.text.Text('{1} {0:02}'.format(jour.day, cal[jour.weekday()][0]),
                                               insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
-                                              fill='black', stroke='black', stroke_width=0,
+                                              fill=DEFAULT_TASK_TEXT_COLOR, stroke=DEFAULT_TASK_TEXT_COLOR, stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
                 if jour.day == 1 and jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
-                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5,
                                                   font_weight="bold"))
                 # Month name
                 if jour.day == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 10*mm),
-                                                  fill='#800000', stroke='#800000', stroke_width=0,
+                                                  fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3,
                                                   font_weight="bold"))
                 # Week number
                 if jour.weekday() == 0:
                     vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 15*mm),
-                                                  fill='black', stroke='black', stroke_width=0,
+                                                  fill=DEFAULT_WEEK_COLOR, stroke=DEFAULT_WEEK_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'],
                                                   font_size=15+1,
                                                   font_weight="bold"))
 
             elif scale == DRAW_WITH_WEEKLY_SCALE:
                 # Year
-                if jour.isocalendar()[1] == 1 and jour.month == 1:
+                #if jour.isocalendar()[1] == 1 and jour.month == 1:
+                if (jour.day <= 7) and jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
-                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Month name
                 if jour.day <= 7:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 10*mm),
-                                                  fill='#800000', stroke='#800000', stroke_width=0,
+                                                  fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
                 vlines.add(svgwrite.text.Text('{0:02}'.format(jour.isocalendar()[1]),
                                               insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 15*mm),
-                                              fill='black', stroke='black', stroke_width=0,
+                                              fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
             
             elif scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY:
                 # Year
-                if jour.isocalendar()[1] == 1 and jour.month == 1:
+                if (jour.day <=7) and jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
-                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
+                
+
                 # Month name
                 if jour.day <= 7:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%B")),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 10*mm),
-                                                  fill='#800000', stroke='#800000', stroke_width=0,
+                                                  fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
                 # Day
                 vlines.add(svgwrite.text.Text('{0:02}'.format(jour.day),
                                               insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 15*mm),
-                                              fill='black', stroke='black', stroke_width=0,
+                                              fill=DEFAULT_DAY_COLOR, stroke=DEFAULT_DAY_COLOR, stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
             
 
@@ -1803,13 +1842,13 @@ class Project(object):
                 # Month number
                 vlines.add(svgwrite.text.Text('{0}'.format(jour.strftime("%m")),
                                               insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
-                                              fill='black', stroke='black', stroke_width=0,
+                                              fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 # Year
                 if jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
-                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
 
 
@@ -1817,14 +1856,14 @@ class Project(object):
                 # Quarter number
                 vlines.add(svgwrite.text.Text('{0}'.format('Q'+str(DateQuarter.from_date(jour)[1])),
                                               insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
-                                              fill='black', stroke='black', stroke_width=0,
+                                              fill=DEFAULT_QUATER_COLOR, stroke=DEFAULT_QUATER_COLOR, stroke_width=0,
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
 
                 # Year
                 if jour.month == 1:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
-                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
 
 
@@ -1832,7 +1871,7 @@ class Project(object):
         vlines.add(svgwrite.shapes.Line(start=((maxx+offset/10)*cm*x_scale.custom_x_scale, 2*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm)))
 
 
-        hlines = dwg.add(svgwrite.container.Group(id='hlines', stroke='lightgray'))
+        hlines = dwg.add(svgwrite.container.Group(id='hlines', stroke=DEFAULT_LINE_COLOR))
 
         dwg.add(svgwrite.shapes.Line(start=((0+offset/10)*cm*x_scale.custom_x_scale, (2)*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (2)*cm), stroke='black'))
         dwg.add(svgwrite.shapes.Line(start=((0+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm), end=((maxx+offset/10)*cm*x_scale.custom_x_scale, (maxy+2)*cm), stroke='black'))
@@ -1922,9 +1961,9 @@ class Project(object):
         dwg.add(svgwrite.shapes.Rect(
                     insert=((0)*cm, 0*cm),
                     size=((maxx+1+offset/10)*cm, (pheight+3)*cm),
-                    fill='white',
+                    fill=DEFAULT_BACKGROUND_COLOR,
                     stroke_width=0,
-                    opacity=1
+                    opacity=DEFAULT_BACKGROUND_OPACITY
                     ))
 
         dwg.add(self._svg_calendar(maxx, pheight, start_date, today, scale, offset=offset))
@@ -2040,8 +2079,8 @@ class Project(object):
                      vac.add(svgwrite.shapes.Rect(
                             insert=(((cday - start_date).days * 10 + 1+offset)*mm*x_scale.custom_x_scale, ((conflict_display_line)*10+1)*mm),
                             size=(4*mm, 8*mm),
-                            fill="#008000",
-                            stroke="#008000",
+                            fill=DEFAULT_VACATION_COLOR,
+                            stroke=DEFAULT_VACATION_COLOR,
                             stroke_width=1,
                             opacity=0.65,
                             ))
@@ -2051,8 +2090,8 @@ class Project(object):
                     conflicts.add(svgwrite.shapes.Rect(
                         insert=(((cday - start_date).days * 10 + 1 + 4 +offset)*mm*x_scale.custom_x_scale, ((conflict_display_line)*10+1)*mm),
                         size=(4*mm, 8*mm),
-                        fill="#AA0000",
-                        stroke="#AA0000",
+                        fill=DEFAULT_OVERCHARGE_COLOR,
+                        stroke=DEFAULT_OVERCHARGE_COLOR,
                         stroke_width=1,
                         opacity=0.65,
                         ))
@@ -2102,9 +2141,9 @@ class Project(object):
         dwg.add(svgwrite.shapes.Rect(
                     insert=(0*cm, 0*cm),
                     size=((maxx+1+offset/10)*cm*x_scale.custom_x_scale, (nline+1)*cm),
-                    fill='white',
+                    fill=DEFAULT_BACKGROUND_COLOR,
                     stroke_width=0,
-                    opacity=1
+                    opacity=DEFAULT_BACKGROUND_OPACITY
                     ))
         dwg.add(self._svg_calendar(maxx, nline-2, start_date, today, scale, offset=offset))
         dwg.add(ldwg)
@@ -2157,7 +2196,7 @@ class Project(object):
         end -- datetime.date of last day to draw
         color -- string of color for drawing the project
         level -- int, indentation level of the project
-        scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        scale -- drawing scale (d: days, w: weeks, wd: weeks showing day number instead of week number, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
         offset -- X offset from image border to start of drawing zone
         """
@@ -2191,10 +2230,10 @@ class Project(object):
                 fprj.add(svgwrite.shapes.Rect(
                         insert=((6*level+0.8+offset)*mm, (prev_y+0.5)*cm),
                         size=(0.2*cm, ((cy-prev_y-1)+0.4)*cm),
-                        fill='purple',
+                        fill=DEFAULT_PROJECTBAR_COLOR,
                         stroke='lightgray',
                         stroke_width=0,
-                        opacity=0.5
+                        opacity=1
                         ))
                 prj_bar = True
             else:
