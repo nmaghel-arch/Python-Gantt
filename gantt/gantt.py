@@ -43,6 +43,7 @@ import sys
 import types
 import re
 from IPython.display import SVG
+from datequarter import DateQuarter
 
 # https://bitbucket.org/mozman/svgwrite
 # http://svgwrite.readthedocs.org/en/latest/
@@ -943,7 +944,7 @@ class Task(x_scale):
         end -- datetime.date of last day to draw
         color -- string of color for drawing the project
         level -- int, indentation level of the project, not used here
-        scale -- drawing scale (d: days, w: weeks, wd: weeks showing day number instead of week number, m: months, q: quaterly)
+        scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
         offset -- X offset from image border to start of drawing zone
         """
@@ -1010,8 +1011,10 @@ class Task(x_scale):
 
 
         elif scale == DRAW_WITH_QUATERLY_SCALE:
-            __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-            sys.exit(1)
+            def _time_diff(end_date, start_date):
+                return DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
+            def _time_diff_d(e, s):
+                return _time_diff(e, s) + 1
 
 
         # cas 1 -s--S==E--e-
@@ -1401,7 +1404,7 @@ class Milestone(Task):
         end -- datetime.date of last day to draw
         color -- string of color for drawing the project
         level -- int, indentation level of the project, not used here
-        scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        scale -- drawing scale (d: days, w: weeks, wd: weeks showing day number instead of week number, m: months, q: quaterly)
         title_align_on_left -- boolean, align milestone title on left
         offset -- X offset from image border to start of drawing zone
         """
@@ -1469,8 +1472,10 @@ class Milestone(Task):
 
 
         elif scale == DRAW_WITH_QUATERLY_SCALE:
-            __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-            sys.exit(1)
+            def _time_diff(end_date, start_date):
+                return DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
+            def _time_diff_d(e, s):
+                return _time_diff(e, s) + 1
 
 
 
@@ -1685,7 +1690,7 @@ class Project(object):
         maxy -- number of lines to draw
         start_date -- datetime.date of the first day to draw
         today -- datetime.date of day as today reference
-        scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        scale -- drawing scale (d: days, w: weeks, wd: weeks showing day number instead of week number, m: months, q: quaterly)
         offset -- X offset from image border to start of drawing zone
         """
         dwg = svgwrite.container.Group()
@@ -1704,9 +1709,7 @@ class Project(object):
             elif scale == DRAW_WITH_MONTHLY_SCALE:
                 jour = start_date +  dateutil.relativedelta.relativedelta(months=+x)
             elif scale == DRAW_WITH_QUATERLY_SCALE:
-                # how many quarter do we need to draw ?
-                __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-                sys.exit(1)
+                jour = start_date +  dateutil.relativedelta.relativedelta(months=+(x*3))
                 
             if not today is None and today == jour:
                 vlines.add(svgwrite.shapes.Rect(
@@ -1811,10 +1814,18 @@ class Project(object):
 
 
             elif scale == DRAW_WITH_QUATERLY_SCALE:
-                # how many quarter do we need to draw ?
-                __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-                sys.exit(1)
+                # Quarter number
+                vlines.add(svgwrite.text.Text('{0}'.format('Q'+str(DateQuarter.from_date(jour)[1])),
+                                              insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 19*mm),
+                                              fill='black', stroke='black', stroke_width=0,
+                                              font_family=_font_attributes()['font_family'], font_size=15-3))
 
+                # Year
+                if jour.month == 1:
+                    vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
+                                                  insert=((x*10+1+offset)*mm*x_scale.custom_x_scale, 5*mm),
+                                                  fill='#400000', stroke='#400000', stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
 
 
 
@@ -1842,7 +1853,7 @@ class Project(object):
         today -- datetime.date of day marked as a reference
         start -- datetime.date of first day to draw
         end -- datetime.date of last day to draw
-        scale -- drawing scale (d: days, w: weeks, m: months, q: quaterly)
+        scale -- drawing scale (d: days, w: weeks, wd: weeks showing day number instead of week number, m: months, q: quaterly)
         title_align_on_left -- boolean, align task title on left
         offset -- X offset from image border to start of drawing zone
         """
@@ -1903,8 +1914,7 @@ class Project(object):
                 maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12 + 1
         elif scale == DRAW_WITH_QUATERLY_SCALE:
             # how many quarter do we need to draw ?
-            __LOG__.critical('DRAW_WITH_QUATERLY_SCALE not implemented yet')
-            sys.exit(1)
+            maxx = DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
 
 
 
