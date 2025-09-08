@@ -1490,20 +1490,29 @@ class Milestone(Task):
 
         svg = svgwrite.container.Group(id=re.sub(r"[ ,'\/()]", '_', self.name))
         # 3.543307 is for conversion from mm to pt units !
+        ref_x = (x + 5) * Task.custom_x_scale + offset
+        ref_y = (y + 5)
+        
+        marker_x_size = 6
+        marker_y_size = 6
+        
+        m_u = (ref_x * mm, (ref_y - marker_y_size / 2) * mm)
+        m_r = ((ref_x + marker_x_size / 2) * mm, ref_y * mm)
+        m_d = (ref_x * mm, (ref_y + marker_y_size / 2) * mm)
+        m_l = ((ref_x - marker_x_size / 2) * mm, ref_y * mm)
+        
         svg.add(svgwrite.shapes.Polygon(
-                points=[### TO DO: CHECK MARKER SIZE WITH OFFSET ###
-                    ((x+5+offset)*mm* x_scale.custom_x_scale, (y+2)*mm),#upper center point
-                    ((x+8+offset/x_scale.custom_x_scale)*mm* x_scale.custom_x_scale, (y+5)*mm),#right center
-                    ((x+5+offset)*mm* x_scale.custom_x_scale, (y+8)*mm),#lower center
-                    ((x+2+offset/x_scale.custom_x_scale)*mm* x_scale.custom_x_scale, (y+5)*mm)#left center
+                points=[
+                    m_u,
+                    m_r,
+                    m_d,
+                    m_l
                 ],
                 fill=color,
                 stroke=color,
                 stroke_width=2,
                 opacity=0.85,
                 ))
-
-
 
         if not title_align_on_left:
             tx = (x+2)*x_scale.custom_x_scale
