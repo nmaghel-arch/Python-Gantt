@@ -2400,14 +2400,19 @@ class Project(object):
         return flist
 
     def change_x_scaling(self, x_scaling):
-        while not str(x_scaling).isnumeric():
-            x_scaling = input("Input x scale (1 is 100% x scaling)")
-            _scale.custom_x_scale = float(x_scaling)
+        try:
+            val = float(str(x_scaling))
+            _scale.custom_x_scale = val
+        except:
+            print('Invalid input: current x scaling is ', _scale.custom_x_scale)
+        
         
     def change_y_scaling(self, y_scaling):
-        while not str(y_scaling).isnumeric():
-            y_scaling = input("Input y scale (1 is 100% x scaling)")
-            _scale.custom_y_scale = float(y_scaling)
+        try:
+            val = float(str(y_scaling))
+            _scale.custom_y_scale = val
+        except:
+            print('Invalid input: current y scaling is ', _scale.custom_y_scale)
 
     def csv(self, csv=None):
         """
