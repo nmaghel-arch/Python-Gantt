@@ -137,7 +137,7 @@ DEFAULT_DAY_COLOR = '#000000'
 DEFAULT_MOD_MARK_COLOR = '#0000FF'
 DEFAULT_BEG_MARK_COLOR = '#000000'
 DEFAULT_END_MARK_COLOR = '#000000'
-DEFAULT_PERCENT_COLOR = '#205DA6'
+DEFAULT_PERCENT_COLOR = '#A7CDFA'
 
 
 
@@ -1158,7 +1158,7 @@ class Task(_scale):
                     fill=DEFAULT_PERCENT_COLOR,
                     stroke=color,
                     stroke_width=1,
-                    opacity=0.35,
+                    opacity=1,
                 ))
 
         if not title_align_on_left:
@@ -1806,8 +1806,8 @@ class Project(object):
                 # Today bar
                 if not today is None and today == jour:
                     vlines.add(svgwrite.shapes.Rect(
-                        insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                        size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
+                        insert=((x+0.4+offset)* cm, 2*cm),
+                        size=(0.2 * cm, (maxy)*cm),
                         fill=DEFAULT_TODAY_COLOR,
                         stroke=DEFAULT_LINE_COLOR,
                         stroke_width=0,
@@ -1834,15 +1834,21 @@ class Project(object):
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
                 # Today bar
                 if not today is None and ((jour + datetime.timedelta(days = -3))<= today < (jour + datetime.timedelta(days = 4))):
-                    print("Today!")
-                    vlines.add(svgwrite.shapes.Rect(
-                        insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                        size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
-                        fill=DEFAULT_TODAY_COLOR,
-                        stroke=DEFAULT_LINE_COLOR,
-                        stroke_width=0,
+                    #vlines.add(svgwrite.shapes.Rect(
+                    #    insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
+                    #    size=(0.2 * cm, (maxy)*cm),
+                    #    fill=DEFAULT_TODAY_COLOR,
+                    #    stroke=DEFAULT_LINE_COLOR,
+                    #    stroke_width=0,
+                    #    opacity=0.8
+                    #    ))
+                    vlines.add(svgwrite.shapes.Line(
+                        start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
+                        end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
+                        stroke=DEFAULT_TODAY_COLOR,
                         opacity=0.8
-                        ))
+                    ))
+                        
             
             elif scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY:
                 # Year
@@ -1867,15 +1873,12 @@ class Project(object):
 
                 # Today bar
                 if not today is None and ((jour + datetime.timedelta(days = -3))<= today < (jour + datetime.timedelta(days = 4))):
-                    print("Today!")
-                    vlines.add(svgwrite.shapes.Rect(
-                        insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                        size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
-                        fill=DEFAULT_TODAY_COLOR,
-                        stroke=DEFAULT_LINE_COLOR,
-                        stroke_width=0,
+                    vlines.add(svgwrite.shapes.Line(
+                        start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
+                        end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
+                        stroke=DEFAULT_TODAY_COLOR,
                         opacity=0.8
-                        ))
+                    ))
             
 
             elif scale == DRAW_WITH_MONTHLY_SCALE:
@@ -1892,15 +1895,11 @@ class Project(object):
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Today bar
                 if not today is None and (today.month == jour.month):
-                    print("Today!")
-                    vlines.add(svgwrite.shapes.Rect(
-                        insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                        size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
-                        fill=DEFAULT_TODAY_COLOR,
-                        stroke=DEFAULT_LINE_COLOR,
-                        stroke_width=0,
-                        opacity=0.8
-                        ))
+                    vlines.add(svgwrite.shapes.Line(
+                        start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
+                        end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
+                        stroke=DEFAULT_TODAY_COLOR,
+                    ))
 
 
             elif scale == DRAW_WITH_QUATERLY_SCALE:
@@ -1918,15 +1917,11 @@ class Project(object):
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Today bar
                 if not today is None and (DateQuarter.from_date(today) == DateQuarter.from_date(jour)):
-                    print("Today!")
-                    vlines.add(svgwrite.shapes.Rect(
-                        insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                        size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
-                        fill=DEFAULT_TODAY_COLOR,
-                        stroke=DEFAULT_LINE_COLOR,
-                        stroke_width=0,
-                        opacity=0.8
-                        ))
+                    vlines.add(svgwrite.shapes.Line(
+                        start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
+                        end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
+                        stroke=DEFAULT_TODAY_COLOR,
+                    ))
 
 
 
