@@ -1753,16 +1753,6 @@ class Project(object):
                 jour = start_date +  dateutil.relativedelta.relativedelta(months=+x)
             elif scale == DRAW_WITH_QUATERLY_SCALE:
                 jour = start_date +  dateutil.relativedelta.relativedelta(months=+(x*3))
-                
-            if not today is None and today == jour:
-                vlines.add(svgwrite.shapes.Rect(
-                    insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                    size=(0.2 * cm * _scale.custom_x_scale, (maxy)*cm),
-                    fill=DEFAULT_TODAY_COLOR,
-                    stroke=DEFAULT_LINE_COLOR,
-                    stroke_width=0,
-                    opacity=0.8
-                    ))
 
             if scale == DRAW_WITH_DAILY_SCALE:
                 # draw vacations
@@ -1804,7 +1794,7 @@ class Project(object):
                                                   font_size=15+1,
                                                   font_weight="bold"))
                 # Today bar
-                if not today is None and ((jour + datetime.timedelta(days = -3))<= today < (jour + datetime.timedelta(days = 4))):
+                if not today is None and today == jour:
                     vlines.add(svgwrite.shapes.Line(
                         start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
                         end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
