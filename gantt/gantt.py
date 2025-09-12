@@ -1834,14 +1834,6 @@ class Project(object):
                                               font_family=_font_attributes()['font_family'], font_size=15+1, font_weight="bold"))
                 # Today bar
                 if not today is None and ((jour + datetime.timedelta(days = -3))<= today < (jour + datetime.timedelta(days = 4))):
-                    #vlines.add(svgwrite.shapes.Rect(
-                    #    insert=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
-                    #    size=(0.2 * cm, (maxy)*cm),
-                    #    fill=DEFAULT_TODAY_COLOR,
-                    #    stroke=DEFAULT_LINE_COLOR,
-                    #    stroke_width=0,
-                    #    opacity=0.8
-                    #    ))
                     vlines.add(svgwrite.shapes.Line(
                         start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
                         end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
