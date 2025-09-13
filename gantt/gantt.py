@@ -59,6 +59,45 @@ cm = 35.43307
 # https://labix.org/python-dateutil
 import dateutil.relativedelta
 
+
+DRAW_WITH_DAILY_SCALE = 'd'
+DRAW_WITH_WEEKLY_SCALE = 'w'
+DRAW_WITH_WEEKLY_SCALE_SHOWDAY = 'wd'
+DRAW_WITH_MONTHLY_SCALE = 'm'
+DRAW_WITH_QUATERLY_SCALE = 'q'
+DRAW_WITH_DAILY_SCALE_R = 'dr'
+DRAW_WITH_WEEKLY_SCALE_R = 'wr'
+DRAW_WITH_MONTHLY_SCALE_R = 'mr'
+DRAW_WITH_QUATERLY_SCALE_R = 'qr'
+
+DEFAULT_BACKGROUND_COLOR = '#FFFFFF'
+DEFAULT_BACKGROUND_OPACITY = 1
+
+DEFAULT_LINE_COLOR = '#D3D3D3'
+DEFAULT_DEP_LINE_COLOR = '#000000'
+
+DEFAULT_TASK_COLOR = '#0085CA'
+DEFAULT_TODAY_COLOR = '#FF0000'
+DEFAULT_MILESTONE_COLOR = '#009DE0'
+DEFAULT_VACATION_COLOR = '#808080'
+DEFAULT_OVERCHARGE_COLOR = '#AA0000'
+DEFAULT_PROJECTBAR_COLOR = '#A2C037'
+DEFAULT_TASK_TEXT_COLOR = '#000000'
+DEFAUL_PROGRESSBAR_BACKGROUND_COLOR = '#000000'
+
+DEFAULT_YEAR_COLOR = '#205DA6'
+DEFAULT_QUATER_COLOR = '#000000'
+DEFAULT_MONTH_COLOR = '#000000'
+DEFAULT_WEEK_COLOR = '#000000'
+DEFAULT_DAY_COLOR = '#000000'
+
+DEFAULT_MOD_MARK_COLOR = '#0000FF'
+DEFAULT_BEG_MARK_COLOR = '#000000'
+DEFAULT_END_MARK_COLOR = '#000000'
+DEFAULT_PERCENT_COLOR = '#A7CDFA'
+
+DEFAULT_RELATIVE_EVENT = 'Access agreement'
+
 class _scale:
     #Variables shared by inheritance with all other classes to define a custom x and y scaling
     custom_x_scale = 1
@@ -73,6 +112,11 @@ class _scale:
         while not (x_scale.isnumeric()):
             y_scale = input("Input y scale (1 is 100% x scaling)")
             custom_y_scale = float(y_scale)
+
+class _relative_event:
+    #String shared by inheritance defining name of relative event
+    relative_event_name = DEFAULT_RELATIVE_EVENT
+        
 
 class _my_svgwrite_drawing_wrapper(svgwrite.Drawing):
     """
@@ -106,38 +150,6 @@ class _my_svgwrite_drawing_wrapper(svgwrite.Drawing):
 __LOG__ = None
 
 ############################################################################
-
-DRAW_WITH_DAILY_SCALE = 'd'
-DRAW_WITH_WEEKLY_SCALE = 'w'
-DRAW_WITH_WEEKLY_SCALE_SHOWDAY = 'wd'
-DRAW_WITH_MONTHLY_SCALE = 'm'
-DRAW_WITH_QUATERLY_SCALE = 'q'
-
-DEFAULT_BACKGROUND_COLOR = '#FFFFFF'
-DEFAULT_BACKGROUND_OPACITY = 1
-
-DEFAULT_LINE_COLOR = '#D3D3D3'
-DEFAULT_DEP_LINE_COLOR = '#000000'
-
-DEFAULT_TASK_COLOR = '#0085CA'
-DEFAULT_TODAY_COLOR = '#FF0000'
-DEFAULT_MILESTONE_COLOR = '#009DE0'
-DEFAULT_VACATION_COLOR = '#808080'
-DEFAULT_OVERCHARGE_COLOR = '#AA0000'
-DEFAULT_PROJECTBAR_COLOR = '#A2C037'
-DEFAULT_TASK_TEXT_COLOR = '#000000'
-DEFAUL_PROGRESSBAR_BACKGROUND_COLOR = '#000000'
-
-DEFAULT_YEAR_COLOR = '#205DA6'
-DEFAULT_QUATER_COLOR = '#000000'
-DEFAULT_MONTH_COLOR = '#000000'
-DEFAULT_WEEK_COLOR = '#000000'
-DEFAULT_DAY_COLOR = '#000000'
-
-DEFAULT_MOD_MARK_COLOR = '#0000FF'
-DEFAULT_BEG_MARK_COLOR = '#000000'
-DEFAULT_END_MARK_COLOR = '#000000'
-DEFAULT_PERCENT_COLOR = '#A7CDFA'
 
 
 
@@ -1013,13 +1025,13 @@ class Task(_scale):
         y = prev_y * 10
 
 
-        if scale == DRAW_WITH_DAILY_SCALE:
+        if scale == DRAW_WITH_DAILY_SCALE or scale == DRAW_WITH_DAILY_SCALE_R:
             def _time_diff(e, s):
                 return (e - s).days
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
-        elif (scale == DRAW_WITH_WEEKLY_SCALE) or (scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY):
+        elif scale == DRAW_WITH_WEEKLY_SCALE or scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY or scale == DRAW_WITH_WEEKLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 td = 0
                 guess = start_date
@@ -1037,14 +1049,14 @@ class Task(_scale):
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
-        elif scale == DRAW_WITH_MONTHLY_SCALE:
+        elif scale == DRAW_WITH_MONTHLY_SCALE or scale == DRAW_WITH_MONTHLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 return dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
 
-        elif scale == DRAW_WITH_QUATERLY_SCALE:
+        elif scale == DRAW_WITH_QUATERLY_SCALE or scale == DRAW_WITH_QUATERLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 return DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
             def _time_diff_d(e, s):
@@ -1473,13 +1485,13 @@ class Milestone(Task):
         y = prev_y * 10
 
 
-        if scale == DRAW_WITH_DAILY_SCALE:
+        if scale == DRAW_WITH_DAILY_SCALE or scale == DRAW_WITH_DAILY_SCALE_R:
             def _time_diff(e, s):
                 return (e - s).days
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
-        elif (scale == DRAW_WITH_WEEKLY_SCALE) or (scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY):
+        elif scale == DRAW_WITH_WEEKLY_SCALE or scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY or scale == DRAW_WITH_WEEKLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 td = 0
                 guess = start_date
@@ -1498,14 +1510,14 @@ class Milestone(Task):
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
-        elif scale == DRAW_WITH_MONTHLY_SCALE:
+        elif scale == DRAW_WITH_MONTHLY_SCALE or scale == DRAW_WITH_MONTHLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 return dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12
             def _time_diff_d(e, s):
                 return _time_diff(e, s) + 1
 
 
-        elif scale == DRAW_WITH_QUATERLY_SCALE:
+        elif scale == DRAW_WITH_QUATERLY_SCALE or scale == DRAW_WITH_QUATERLY_SCALE_R:
             def _time_diff(end_date, start_date):
                 return DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
             def _time_diff_d(e, s):
@@ -1735,13 +1747,20 @@ class Project(object):
 
         vlines = dwg.add(svgwrite.container.Group(id='vlines', stroke=DEFAULT_LINE_COLOR))
 
-        # Year (beginning)
-        vlines.add(svgwrite.text.Text('{0}'.format(start_date.year),
-                                      insert=((0*10+0+offset)* mm * _scale.custom_x_scale, 5*mm),
-                                      fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
-                                      font_family=_font_attributes()['font_family'], font_size=15+5,
-                                      font_weight="bold"))
-
+        if scale.find('r') == -1:
+            # Year (beginning)
+            vlines.add(svgwrite.text.Text('{0}'.format(start_date.year),
+                                          insert=((0*10+0+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                          fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                          font_family=_font_attributes()['font_family'], font_size=15+5,
+                                          font_weight="bold"))
+        else:
+            # Relative start
+            vlines.add(svgwrite.text.Text('{0}'.format(_relative_event.relative_event_name),
+                                          insert=((0*10+0+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                          fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                          font_family=_font_attributes()['font_family'], font_size=15+5,
+                                          font_weight="bold"))
         
         for x in range(maxx):
             vlines.add(svgwrite.shapes.Line(start=((x+offset/10)* cm * _scale.custom_x_scale, 2*cm), end=((x+offset/10) * cm * _scale.custom_x_scale, (maxy+2)*cm)))
@@ -1874,7 +1893,7 @@ class Project(object):
                                                   fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Today bar
-                if not today is None and (today.month == jour.month):
+                if not today is None and (today.month == jour.month) and (today.year == jour.year):
                     vlines.add(svgwrite.shapes.Line(
                         start=((x+0.4+offset)* cm * _scale.custom_x_scale, 2*cm),
                         end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
@@ -1890,7 +1909,7 @@ class Project(object):
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
 
                 # Year
-                if jour.month == 1:
+                if 1 <= jour.month < 3:
                     vlines.add(svgwrite.text.Text('{0}'.format(jour.year),
                                                   insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
                                                   fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
@@ -1902,6 +1921,89 @@ class Project(object):
                         end=((x+0.4+offset)* cm * _scale.custom_x_scale, (maxy+2)*cm),
                         stroke=DEFAULT_TODAY_COLOR,
                     ))
+            
+            elif scale == DRAW_WITH_DAILY_SCALE_R:
+                # Current day
+                vlines.add(svgwrite.text.Text(str(x + 1),
+                                              insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 19*mm),
+                                              fill=DEFAULT_TASK_TEXT_COLOR, stroke=DEFAULT_TASK_TEXT_COLOR, stroke_width=0,
+                                              font_family=_font_attributes()['font_family'], font_size=15-3))
+                # Year
+                if divmod(x, 365)[1] == 0 and x != 0:
+                    vlines.add(svgwrite.text.Text('{0}'.format('Y'+str(1 + divmod(x, 365)[0])),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+5,
+                                                  font_weight="bold"))
+                # Month name
+                if divmod(x, 30)[1] == 0:
+                    vlines.add(svgwrite.text.Text('{0}'.format('M'+str(1 + divmod(x, 30)[0])),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 10*mm),
+                                                  fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+3,
+                                                  font_weight="bold"))
+                # Week number
+                if divmod(x, 7)[1] == 0:
+                    vlines.add(svgwrite.text.Text('{0:02}'.format('W'+str(1 + divmod(x, 7)[0])),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 15*mm),
+                                                  fill=DEFAULT_WEEK_COLOR, stroke=DEFAULT_WEEK_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'],
+                                                  font_size=15+1,
+                                                  font_weight="bold"))
+               
+
+            elif scale == DRAW_WITH_WEEKLY_SCALE_R:
+                # Relative week
+                vlines.add(svgwrite.text.Text('W' + str(x + 1),
+                                              insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 19*mm),
+                                              fill=DEFAULT_TASK_TEXT_COLOR, stroke=DEFAULT_TASK_TEXT_COLOR, stroke_width=0,
+                                              font_family=_font_attributes()['font_family'], font_size=15-3))
+                
+                # Relative Year
+                if (0 <= divmod(x*7, 365)[1] < 7) and x != 0:
+                    vlines.add(svgwrite.text.Text('{0}'.format('Y' + str(divmod(x*7, 365)[0])),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
+                # Month name
+                if divmod(x*7, 30)[1] < 7:
+                    vlines.add(svgwrite.text.Text('{0}'.format(str('M'+str(divmod(x*7, 30)[0]))),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 10*mm),
+                                                  fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
+               
+                        
+            
+            
+
+            elif scale == DRAW_WITH_MONTHLY_SCALE_R:
+                # Month number
+                vlines.add(svgwrite.text.Text('{0}'.format('M'+str(x + 1)),
+                                              insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 19*mm),
+                                              fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
+                                              font_family=_font_attributes()['font_family'], font_size=15-3))
+                # Year
+                if divmod(x, 12)[1] == 0 and x !=0:
+                    vlines.add(svgwrite.text.Text('Y'+str(divmod(x, 12)[0]),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
+               
+
+            elif scale == DRAW_WITH_QUATERLY_SCALE_R:
+                # Quarter number
+                vlines.add(svgwrite.text.Text('Q'+str(divmod(x,4)[1] + 1),
+                                              insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 19*mm),
+                                              fill=DEFAULT_QUATER_COLOR, stroke=DEFAULT_QUATER_COLOR, stroke_width=0,
+                                              font_family=_font_attributes()['font_family'], font_size=15-3))
+
+                # Year
+                if (divmod(x, 4)[1]  == 0) and x != 0:
+                    vlines.add(svgwrite.text.Text('Y'+str(1 + divmod(x*120, 365)[0]),
+                                                  insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
+                                                  fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
+                                                  font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
+               
 
 
 
@@ -1964,10 +2066,10 @@ class Project(object):
         if dep is not None:
             ldwg.add(dep)
 
-        if scale == DRAW_WITH_DAILY_SCALE:
+        if scale == DRAW_WITH_DAILY_SCALE or scale == DRAW_WITH_DAILY_SCALE_R:
             # how many dayss do we need to draw ?
             maxx = (end_date - start_date).days
-        elif (scale == DRAW_WITH_WEEKLY_SCALE) or (scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY):
+        elif scale == DRAW_WITH_WEEKLY_SCALE or scale == DRAW_WITH_WEEKLY_SCALE_SHOWDAY or scale == DRAW_WITH_WEEKLY_SCALE_R:
             # how many weeks do we need to draw ?
             maxx = 0
             guess = start_date
@@ -1982,13 +2084,13 @@ class Project(object):
             while guess <= end_date:
                 maxx += 1
                 guess = guess + dateutil.relativedelta.relativedelta(weeks=+1)
-        elif scale == DRAW_WITH_MONTHLY_SCALE:
+        elif scale == DRAW_WITH_MONTHLY_SCALE or scale == DRAW_WITH_MONTHLY_SCALE_R:
             # how many months do we need to draw ?
             if dateutil.relativedelta.relativedelta(end_date, start_date).days == 0:
                 maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12
             else:
                 maxx = dateutil.relativedelta.relativedelta(end_date, start_date).months + dateutil.relativedelta.relativedelta(end_date, start_date).years*12 + 1
-        elif scale == DRAW_WITH_QUATERLY_SCALE:
+        elif scale == DRAW_WITH_QUATERLY_SCALE or scale == DRAW_WITH_QUATERLY_SCALE_R:
             # how many quarter do we need to draw ?
             maxx = DateQuarter.from_date(end_date) - DateQuarter.from_date(start_date)
 
@@ -2373,6 +2475,9 @@ class Project(object):
             if r not in flist:
                 flist.append(r)
         return flist
+
+    def change_relative_event(self, event):
+        _relative_event.relative_event_name = str(event)
 
     def change_x_scaling(self, x_scaling):
         try:
