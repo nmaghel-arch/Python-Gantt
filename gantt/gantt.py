@@ -1960,8 +1960,8 @@ class Project(object):
                                               font_family=_font_attributes()['font_family'], font_size=15-3))
                 
                 # Relative Year
-                if (divmod(x, 52)[1] == 0) and x != 0:
-                    vlines.add(svgwrite.text.Text('{0}'.format('Y' + str(divmod(x, 52)[0])),
+                if (divmod(x, 48)[1] == 0) and x != 0:
+                    vlines.add(svgwrite.text.Text('{0}'.format('Y' + str(divmod(x, 48)[0])),
                                                   insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 5*mm),
                                                   fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
