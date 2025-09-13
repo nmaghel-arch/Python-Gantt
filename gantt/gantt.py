@@ -1966,8 +1966,8 @@ class Project(object):
                                                   fill=DEFAULT_YEAR_COLOR, stroke=DEFAULT_YEAR_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+5, font_weight="bold"))
                 # Month name
-                if divmod(x*7, 30)[1] < 7:
-                    vlines.add(svgwrite.text.Text('{0}'.format(str('M'+str(divmod(x*7, 30)[0]))),
+                if divmod(x, 4)[1] == 0:
+                    vlines.add(svgwrite.text.Text('{0}'.format(str('M'+str(divmod(x, 4)[0]))),
                                                   insert=((x*10+1+offset)* mm * _scale.custom_x_scale, 10*mm),
                                                   fill=DEFAULT_MONTH_COLOR, stroke=DEFAULT_MONTH_COLOR, stroke_width=0,
                                                   font_family=_font_attributes()['font_family'], font_size=15+3, font_weight="bold"))
